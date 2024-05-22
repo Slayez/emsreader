@@ -17,15 +17,16 @@ import torch
 
 
 print("---");
-print("torch.cuda.is_available");
-print(torch.cuda.is_available());
+print("torch.cuda.is_available "+str(torch.cuda.is_available()));
 print("---");
 
 # распознавание с помощью easyocr, параметры: отключена детализация вывода,
 # включены параграфы и установлена точность текста
 def easyocr_recognition_action(path_img, reader):
     im = Image.open(path_img)
+    # настройки обрезки скрина для распознания в % от размера экрана
     im_crop = im.crop((im.size[0]*0.16, im.size[1]*0.83, im.size[0]*0.65, im.size[1]));
+    # для дебага раскоментить строки ниже
     #im_crop.show();
     #sys.exit()
     return reader.readtext(asarray(im_crop), detail=0, paragraph=True, text_threshold=0.8)
@@ -40,11 +41,12 @@ def check_dir(path):
     if (os.path.isdir(path)==False):
         os.mkdir(path);
 
-def move_file(destination_file, source_file, file_name):
+def move_file(destination_file, source_file, file_name, delete_new):
     check_dir(destination_file[:-len(file_name)]);
     if (True!=os.path.exists(destination_file)):
         shutil.copy2(source_file, destination_file);
-        #os.remove(source_file);
+        if (delete_new):
+            os.remove(source_file);
 
 def build_file_name(dir, destination, file_name, date, old = False, date_dir = True):
     d_dir = "";
@@ -61,8 +63,10 @@ def build_file_name(dir, destination, file_name, date, old = False, date_dir = T
         return dir+"До повышения/"+d_dir+destination+file_name;
 
 def get_night(date : datetime):
+    # дневное и ночное время если в вашем отделе иначе поправьте
     night_time = datetime.strptime("22-00-00", '%H-%M-%S').time();
     day_time = datetime.strptime("10-00-00", '%H-%M-%S').time();
+    # правка для выходных
     if (date.weekday() >= 5):
         day_time = datetime.strptime("12-00-00", '%H-%M-%S').time();
     time = date.time();
@@ -132,33 +136,45 @@ class ems_work:
 
 def main():
 
+    # главная директория в которой будет создана сортировка, в ней должна быть папка со скринами
     MAIN_DIR = "D:/рп/EMS/";
 
+    # папка со скринами
     path_img = MAIN_DIR+"NEW/";
 
     ems_works = [];
-    ems_works.append(ems_work("Таблетки", "вылечил", "Выдача таблеток Пиллбокс", "Выдача таблеток Сенди-Шорс и Палето-Бэй", "","", 1, 0, 0, 0));
+
+    # название, тэг_для_поиска, название_папки, название_папки_пригород, название_папки_ночь, название_папки_ночь_пригород,    
+    ems_works.append(ems_work("Таблетки", "вылечил", "Выдача таблеток Пиллбокс", "Выдача таблеток Сенди-Шорс и Палето-Бэй", "","",
+    # баллы, баллы_пригород, баллы_ночью, баллы_ночью_пригород
+    # если нет дополнительных баллов писать 0
+     1, 0, 0, 0));
     ems_works.append(ems_work("Вакцины", "вакцинировал", "Вакцинация Пиллбокс", "Вакцинация Сенди-Шорс и Палето-Бэй", "","", 2, 0, 0, 0));
     ems_works.append(ems_work("ПМП", "реанимировал", "ПМП день", "", "ПМП ночь","", 3, 0, 4, 0));
     ems_works.append(ems_work("Медсправки", "справку", "Медсправки", "", "","", 4, 0, 0, 0));    
     ems_works.append(ems_work("Пожары", "задачу", "Пожар город", "Пожар пригород", "Пожар город ночь","Пожар пригород ночь", 4, 5, 5, 6)); 
 
+    # тэги для пригорода
     extra_flags = ['Сэнди', 'Палето', 'Сенора', 'Чилиад', 'Хармони', 'Джошуа'];   
 
+    # дата повышения для отбора только действующих баллов
     up_date = datetime.strptime("18-05-2024-04-47-00", '%d-%m-%Y-%H-%M-%S');
 
+    # разделять по дням
     date_dir = False;
+    # удалять обработанные скрины, после копирования в сортированные папки
+    delete_new = False;
 
     reader = easyocr.Reader(["ru","en"], gpu = True); 
 
     result = [os.path.join(dp, f) for dp, dn, filenames in os.walk(path_img) for f in filenames if os.path.splitext(f)[1] in '.png.jpg'];
     i = 0;    
-
-    for val in result:  
-
+    
+    print("Найдено скринов "+str(len(result)));
+    print("---"); 
+    for val in result:
         rec = easyocr_recognition_action(val, reader);      
-        i = i+1;
-  
+        i = i+1;  
         name = val
         name = name[len(path_img):len(name)];
         match_str = re.search(r'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}', name);
@@ -180,20 +196,15 @@ def main():
                     work.add_work(up_date, date, extra_flag);
                     destination_file = build_file_name(MAIN_DIR, work.get_folder_name(date, extra_flag)+"/", name, date, (date<up_date), date_dir);
                     flags = flags+1;
-        
-        source_file=val;        
-
-
-        #if (flags>1):
-        #    destination_file = build_file_name(MAIN_DIR, "Более 1 типа на скрине/", name, date, (date<up_date), date_dir);
-        move_file(destination_file, source_file, name);
+        source_file=val; 
+        move_file(destination_file, source_file, name, delete_new);
 
     all = 0;
     for work in ems_works:
         print(work.name+" "+str(work.count)+ " баллов: "+str(work.point_count));
         all = all + work.point_count;
     print("---");    
-    print ("Всего баллов: "+str(all));
+    print("Всего баллов: "+str(all));
     return;    
 
 

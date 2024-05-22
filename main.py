@@ -169,7 +169,7 @@ def main():
 
     result = [os.path.join(dp, f) for dp, dn, filenames in os.walk(path_img) for f in filenames if os.path.splitext(f)[1] in '.png.jpg'];
     i = 0;    
-    
+
     print("Найдено скринов "+str(len(result)));
     print("---"); 
     for val in result:
@@ -177,13 +177,18 @@ def main():
         i = i+1;  
         name = val
         name = name[len(path_img):len(name)];
+        # формат времени в вашем скрине сейчас поиск по 2024-05-20-23-36-37
         match_str = re.search(r'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}', name);
         date = datetime.strptime(match_str.group(), '%Y-%m-%d-%H-%M-%S');
+
+        # формат времени в вашем скрине поиск по 15.05.2024 - 14.09.37
+        # match_str = re.search(r'\d{2}.\d{2}.\d{4} - \d{2}.\d{2}.\d{2}', name);
+        # date = datetime.strptime(match_str.group(), '%d.%m.%Y - %H.%M.%S');
+        
 
         flags = 0;
         extra_flag = False;
         time = date.time();
-        #if (line.find('Сэнди')!= -1):
 
         for line in rec:
             for flag in extra_flags:

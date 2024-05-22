@@ -1,6 +1,6 @@
 # Скрипт для сортировки скринов EMS
-![example.png](https://github.com/Slayez/emsreader/blob/master/img/example.png)
-![example2.png](https://github.com/Slayez/emsreader/blob/master/img/example2.png)
+![example.png](https://github.com/Slayez/emsreader/blob/master/img/example2.png)  
+![example2.png](https://github.com/Slayez/emsreader/blob/master/img/example.png)
 # https://pytorch.org
 ```
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121

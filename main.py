@@ -183,8 +183,7 @@ def main():
 
         # формат времени в вашем скрине поиск по 15.05.2024 - 14.09.37
         # match_str = re.search(r'\d{2}.\d{2}.\d{4} - \d{2}.\d{2}.\d{2}', name);
-        # date = datetime.strptime(match_str.group(), '%d.%m.%Y - %H.%M.%S');
-        
+        # date = datetime.strptime(match_str.group(), '%d.%m.%Y - %H.%M.%S');        
 
         flags = 0;
         extra_flag = False;

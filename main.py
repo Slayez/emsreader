@@ -181,13 +181,21 @@ def main():
         i = i+1;  
         name = val
         name = name[len(path_img):len(name)];
+
         # формат времени в вашем скрине сейчас поиск по 2024-05-20-23-36-37
         match_str = re.search(r'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}', name);
-        date = datetime.strptime(match_str.group(), '%Y-%m-%d-%H-%M-%S');
+        if (match_str!=None):
+            date = datetime.strptime(match_str.group(), '%Y-%m-%d-%H-%M-%S');
+        else:
+            # формат времени в вашем скрине поиск по 15.05.2024 - 14.09.37
+            match_str = re.search(r'\d{2}.\d{2}.\d{4} - \d{2}.\d{2}.\d{2}', name);
+            if (match_str!=None):            
+                date = datetime.strptime(match_str.group(), '%d.%m.%Y - %H.%M.%S');
 
-        # формат времени в вашем скрине поиск по 15.05.2024 - 14.09.37
-        # match_str = re.search(r'\d{2}.\d{2}.\d{4} - \d{2}.\d{2}.\d{2}', name);
-        # date = datetime.strptime(match_str.group(), '%d.%m.%Y - %H.%M.%S');        
+        if (match_str==None):
+            print(name);
+            print("Не содержит читаемой даты в названии! Исправьте формат скрина или формат чтения его даты в коде.");
+            sys.exit();      
 
         flags = 0;
         extra_flag = False;

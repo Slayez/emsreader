@@ -31,6 +31,7 @@ def easyocr_recognition_action(path_img, reader):
     #sys.exit()
     return reader.readtext(asarray(im_crop), detail=0, paragraph=True, text_threshold=0.8)
 
+# в 20% случаев не распознаёт дату со скрина, сейчас не используется
 def easyocr_recognition_date(path_img, reader):
     im = Image.open(path_img)
     im_crop = im.crop((im.size[0]*0.16, im.size[1]*0.83, im.size[0]*0.30, im.size[1]*0.94));
@@ -171,7 +172,8 @@ def main():
     i = 0;    
 
     print("Найдено скринов "+str(len(result)));
-    print("---"); 
+    td = datetime.today();
+    
     for val in result:
         rec = easyocr_recognition_action(val, reader);      
         i = i+1;  
@@ -202,7 +204,8 @@ def main():
                     flags = flags+1;
         source_file=val; 
         move_file(destination_file, source_file, name, delete_new);
-
+    print ("Обработано за "+str(datetime.today() - td));    
+    print("---"); 
     all = 0;
     for work in ems_works:
         print(work.name+" "+str(work.count)+ " баллов: "+str(work.point_count));

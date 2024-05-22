@@ -2,7 +2,7 @@
 # pip install Pillow
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import os.path
 import sys
 import time 
@@ -49,10 +49,17 @@ def move_file(destination_file, source_file, file_name, delete_new):
         if (delete_new):
             os.remove(source_file);
 
-def build_file_name(dir, destination, file_name, date, old = False, date_dir = True):
+def build_file_name(dir, destination, file_name, date, old = False, date_dir = True, date_dir_week = False):
     d_dir = "";
+    # по неделям
+    if (date_dir_week):
+        d = str(date.date().year)+"-W"+str(date.date().isocalendar()[1]);
+        monday = datetime.strptime(d + '-1', "%Y-W%W-%w");
+        sunday = monday + timedelta(days=6);       
+        d_dir = str(monday.date()) +" - "+ str(sunday.date())+"/";
+    # по дням
     if (date_dir):
-        d_dir = str(date.date())+"/";
+        d_dir = d_dir+str(date.date())+"/";
 
     if (old == False):
         check_dir(dir+"После повышения/");
@@ -151,7 +158,6 @@ def main():
      1, 0, 0, 0));
     # если нет дополнительных баллов писать 0 при этом доп папка не будет создана
 
-
     ems_works.append(ems_work("Вакцины", "вакцинировал", "Вакцинация", "Вакцинация пригород", "Вакцинация ночь","Вакцинация ночь пригород", 2, 0, 0, 0));
     ems_works.append(ems_work("ПМП", "реанимировал", "ПМП день", "", "ПМП ночь","", 3, 0, 4, 0));
     ems_works.append(ems_work("Медсправки", "справку", "Медсправки", "Медсправки пригород", "Медсправки ночь","Медсправки ночь пригород", 4, 0, 0, 0));    
@@ -161,10 +167,13 @@ def main():
     extra_flags = ['Сэнди', 'Палето', 'Сенора', 'Чилиад', 'Хармони', 'Джошуа'];   
 
     # дата повышения для отбора только действующих баллов
-    up_date = datetime.strptime("18-05-2024-04-47-00", '%d-%m-%Y-%H-%M-%S');
+    up_date = datetime.strptime("20-05-2024-21-00-00", '%d-%m-%Y-%H-%M-%S');
 
     # разделять по дням
     date_dir = False;
+    # разделять по неделям - для еженедельного отчёта
+    date_dir_week = True;
+    
     # удалять обработанные скрины, после копирования в сортированные папки
     delete_new = False;
 
@@ -179,8 +188,7 @@ def main():
     for val in result:
         rec = easyocr_recognition_action(val, reader);      
         i = i+1;  
-        name = val
-        name = name[len(path_img):len(name)];
+        name = os.path.basename(val);
 
         # формат времени в вашем скрине сейчас поиск по 2024-05-20-23-36-37
         match_str = re.search(r'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}', name);
@@ -210,10 +218,11 @@ def main():
             for work in ems_works:
                 if (line.find(work.find_tag)!= -1):
                     work.add_work(up_date, date, extra_flag);
-                    destination_file = build_file_name(MAIN_DIR, work.get_folder_name(date, extra_flag)+"/", name, date, (date<up_date), date_dir);
+                    destination_file = build_file_name(MAIN_DIR, work.get_folder_name(date, extra_flag)+"/", name, date, (date<up_date), date_dir, date_dir_week);
                     flags = flags+1;
         source_file=val; 
         move_file(destination_file, source_file, name, delete_new);
+
     print ("Обработано за "+str(datetime.today() - td));    
     print("---"); 
     all = 0;
@@ -223,9 +232,6 @@ def main():
     print("---");    
     print("Всего баллов: "+str(all));
     return;    
-
-
-
 
 if __name__ == "__main__":
     main()
